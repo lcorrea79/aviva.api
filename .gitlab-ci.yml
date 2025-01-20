@@ -1,0 +1,70 @@
+test:backend:
+  stage: test
+  image: mcr.microsoft.com/dotnet/sdk:8.0
+  script:
+    - cd backend/src/Tests/Services/EHR/Core/EHR.Application.Test
+    - dotnet test
+  rules:
+    - if: $CI_COMMIT_BRANCH == "develop"
+      when: always
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      when: always
+
+build:backend:
+  stage: build
+  image:
+    name: gcr.io/kaniko-project/executor:debug
+    entrypoint: [""]
+  needs:
+    - job: test:backend
+      artifacts: false
+  before_script:
+    - cp $APP_SETTINGS_FILE backend/src/Services/EHR/EHR/EHR.WebApi/appsettings.json
+  script:
+    - /kaniko/executor
+      --context $CI_PROJECT_DIR/backend
+      --dockerfile $CI_PROJECT_DIR/backend/Dockerfile
+      --destination "${CI_REGISTRY}/${CI_PROJECT_PATH}/backend:${CI_COMMIT_SHA}"
+      --cache=true
+      --cache-repo="${CI_REGISTRY}/${CI_PROJECT_PATH}/backend-cache"
+      --cleanup
+      --use-new-run
+  rules:
+    - if: $CI_COMMIT_BRANCH == "develop"
+      when: always
+
+deploy:backend:
+  stage: deploy
+  image:
+    name: "${CI_REGISTRY}/${CI_PROJECT_PATH}/deploy:${CI_COMMIT_REF_SLUG}"
+    entrypoint: [""]
+  needs:
+    - job: build:backend
+      artifacts: false
+    - job: build-deploy-image
+      artifacts: false
+      optional: true
+  id_tokens:
+    GITLAB_OIDC_TOKEN_BACKEND:
+      aud: https://gitlab.com
+  before_script:
+    - >
+      export $(printf "AWS_ACCESS_KEY_ID=%s AWS_SECRET_ACCESS_KEY=%s AWS_SESSION_TOKEN=%s"
+      $(aws sts assume-role-with-web-identity
+      --role-arn ${AWS_ROLE_ARN}
+      --role-session-name "GitLabRunner-${CI_PROJECT_ID}-${CI_PIPELINE_ID}"
+      --web-identity-token ${GITLAB_OIDC_TOKEN_BACKEND}
+      --duration-seconds 3600
+      --query 'Credentials.[AccessKeyId,SecretAccessKey,SessionToken]'
+      --output text))
+    - aws sts get-caller-identity
+  script:
+    - cd backend
+    - aws ecr get-login-password --region $AWS_DEFAULT_REGION | skopeo login --username AWS  --password-stdin --authfile=aws-ecr.json $AWS_ECR_REGISTRY
+    - skopeo copy --src-creds=$CI_REGISTRY_USER:$CI_REGISTRY_PASSWORD --dest-authfile=aws-ecr.json "docker://${CI_REGISTRY}/${CI_PROJECT_PATH}/backend:${CI_COMMIT_SHA}" "docker://${AWS_ECR_REGISTRY}/${AWS_ECR_REGISTRY_NAME}:${CI_COMMIT_SHA}"
+    - ./ecs-deploy -n $ECS_SERVICE_NAME -c $ECS_CLUSTER_NAME -i "${AWS_ECR_REGISTRY}/${AWS_ECR_REGISTRY_NAME}:${CI_COMMIT_SHA}" -r $AWS_DEFAULT_REGION -a $AWS_ROLE_ARN -w $GITLAB_OIDC_TOKEN_BACKEND -t 300 --enable-rollback --wait-for-success --copy-task-definition-tags --run-task --max-definitions 5
+    - aws ssm put-parameter --name $AWS_SSM_NAME --value "${AWS_ECR_REGISTRY}/${AWS_ECR_REGISTRY_NAME}:${CI_COMMIT_SHA}" --type String --overwrite --region $AWS_DEFAULT_REGION
+  resource_group: develop-backend-deploy
+  rules:
+    - if: $CI_COMMIT_BRANCH == "develop"
+      when: always
