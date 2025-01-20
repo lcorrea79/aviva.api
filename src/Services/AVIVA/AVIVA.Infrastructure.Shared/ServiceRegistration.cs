@@ -11,7 +11,6 @@ namespace AVIVA.Infrastructure.Shared
         {
             services.AddTransient<IDateTimeService, DateTimeService>();
             services.AddTransient<IMockService, MockService>();
-            // Registra PaymentProviderSelector para inyección de dependencias
             services.AddHttpClient<IPaymentProviderService, PaymentProviderService>();
 
         }

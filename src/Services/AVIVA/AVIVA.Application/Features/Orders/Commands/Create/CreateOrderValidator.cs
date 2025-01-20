@@ -6,9 +6,12 @@ namespace AVIVA.Application.Features.Orders.Commands.Create
     {
         public CreateOrderValidator()
         {
-            //  RuleFor(x => x.orderDto.Amount).NotEmpty().WithMessage("Amount is required");
-            //RuleFor(x => x.orderDto.Details).NotEmpty().WithMessage("Details is required");
-            //RuleFor(x => x.orderDto.Price).NotEmpty().WithMessage("Price is required");
+            RuleFor(x => x.orderRequestDto.Products.Count)
+                .GreaterThan(0)
+                .WithMessage("The number of products must be greater than 0.");
+            RuleFor(x => x.orderRequestDto.Method)
+                .NotEmpty()
+                .WithMessage("Method is required.");
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿namespace AVIVA.Application.Parameters
+﻿namespace EHR.Application.Parameters
 {
     public class QueryParameter : PagingParameter
     {

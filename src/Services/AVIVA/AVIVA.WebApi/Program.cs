@@ -36,14 +36,10 @@ try
     builder.Services.AddApplicationLayer();
     // Current tenant service with scoped lifetime (created per each request)
     builder.Services.AddTransient<IDateTimeService, DateTimeService>();
-    //builder.Services.AddScoped<IUserService, UserService>();
-
-    // adding a database service with configuration -- connection string read from appsettings.json
-
 
 
     builder.Services.AddDbContext<ApplicationDbContext>(options =>
-     options.UseInMemoryDatabase("InMemoryDb"));
+    options.UseInMemoryDatabase("InMemoryDb"));
     builder.Services.AddPersistenceInfrastructure(builder.Configuration);
     builder.Services.AddSharedInfrastructure(builder.Configuration);
     builder.Services.AddSwaggerExtension();
