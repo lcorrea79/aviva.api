@@ -39,8 +39,6 @@ namespace AVIVA.Application.Test.Features.Products.Commands.Delete
 
             var products = await _productRepository.Object.GetAllAsync();
             products.Count().ShouldBe(1);
-            //var product = await _productRepository.Object.GetByIdAsync(productId);
-            //product.ShouldBe(null);
 
         }
     }

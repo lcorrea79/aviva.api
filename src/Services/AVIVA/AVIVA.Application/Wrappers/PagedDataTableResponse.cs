@@ -1,6 +1,6 @@
-﻿using AVIVA.Application.Parameters;
+﻿using EHR.Application.Parameters;
 
-namespace AVIVA.Application.Wrappers
+namespace EHR.Application.Wrappers
 {
     public class PagedDataTableResponse<T> : Response<T>
     {

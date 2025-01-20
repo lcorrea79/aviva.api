@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace AVIVA.Application.Wrappers
+namespace EHR.Application.Wrappers
 {
     /// <summary>
     /// Pagination

@@ -1,5 +1,5 @@
 ﻿using AVIVA.Application.Exceptions;
-using AVIVA.Application.Wrappers;
+using EHR.Application.Wrappers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using System;

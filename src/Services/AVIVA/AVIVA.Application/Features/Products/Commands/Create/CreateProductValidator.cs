@@ -8,7 +8,7 @@ namespace AVIVA.Application.Features.Products.Commands.Create
         {
             RuleFor(x => x.productDto.Name).NotEmpty().WithMessage("Name is required");
             RuleFor(x => x.productDto.Details).NotEmpty().WithMessage("Details is required");
-            RuleFor(x => x.productDto.UnitPrice).NotEmpty().WithMessage("Price is required");
+            RuleFor(x => x.productDto.UnitPrice).NotEmpty().WithMessage("UnitPrice is required");
         }
     }
 }
